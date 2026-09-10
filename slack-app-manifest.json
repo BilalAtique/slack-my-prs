@@ -12,7 +12,7 @@
     "slash_commands": [
       {
         "command": "/myprs",
-        "url": "https://REPLACE-WITH-YOUR-DEPLOYMENT.vercel.app/api/slack",
+        "url": "https://slack-my-prs.vercel.app/api/slack",
         "description": "List your open pull requests",
         "should_escape": false
       }

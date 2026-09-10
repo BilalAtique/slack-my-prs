@@ -4,3 +4,9 @@ node_modules
 .env.local
 .env*
 !.env.example
+
+# Local Slack CLI state: the app/team IDs this checkout is linked to.
+.slack/apps.json
+.slack/apps.dev.json
+.slack/config.json
+.slack/cache

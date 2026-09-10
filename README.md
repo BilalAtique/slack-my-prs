@@ -46,12 +46,25 @@ own signature on every request, so that is the guard it relies on.
 
 ### 2. Create the Slack app
 
-Go to <https://api.slack.com/apps> → **Create New App** → **From a manifest**,
-pick your workspace, and paste `slack-app-manifest.json`. Replace the
-`REPLACE-WITH-YOUR-DEPLOYMENT` host in the `url` first.
+Point the `url` in `slack-app-manifest.json` at your own deployment, then let the
+[Slack CLI](https://docs.slack.dev/tools/slack-cli/) create and install the app:
 
-Install it to the workspace, then copy the **Signing Secret** from
-**Basic Information**.
+```bash
+curl -fsSL https://downloads.slack-edge.com/slack-cli/install.sh | bash
+slack login                                   # follow the /slackauthticket flow
+slack auth list                               # note your team ID and user ID
+slack manifest validate --source local --team <TEAM_ID>
+slack app install --team <TEAM_ID>
+```
+
+`.slack/hooks.json` is what makes this work: its `get-manifest` hook prints
+`slack-app-manifest.json` to stdout, which is how the CLI learns what to create.
+The hook is a script rather than a bare `cat` because the CLI appends its own
+`--source` / `--protocol` / `--boundary` flags to the command.
+
+Then copy the **Signing Secret** from **Basic Information** at
+`https://api.slack.com/apps/<APP_ID>/general`. Slack exposes it only in that
+screen — there is no API for it, so this step stays manual.
 
 Only the `commands` scope is requested. The reply travels back over
 `response_url`, so the app never needs a bot token or permission to post.
@@ -62,7 +75,7 @@ Only the `commands` scope is requested. The reply travels back over
 vercel env add SLACK_SIGNING_SECRET production   # from Basic Information
 vercel env add GITHUB_TOKEN production           # PAT, read-only (see below)
 vercel env add GITHUB_LOGIN production           # your GitHub handle
-vercel env add SLACK_USER_IDS production         # optional, your Slack user ID
+vercel env add SLACK_USER_IDS production         # optional, your Slack member ID
 vercel env add GITHUB_SEARCH_SCOPE production    # optional, e.g. repo:owner/name
 vercel deploy --prod                             # redeploy to pick them up
 ```
