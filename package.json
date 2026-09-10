@@ -1,0 +1,19 @@
+{
+  "name": "slack-my-prs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "node --test src/*.test.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vercel/functions": "^2.2.13"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  }
+}

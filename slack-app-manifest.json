@@ -1,0 +1,31 @@
+{
+  "display_information": {
+    "name": "My PRs",
+    "description": "Lists your open pull requests, without leaving Slack.",
+    "background_color": "#1f2328"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "My PRs",
+      "always_online": false
+    },
+    "slash_commands": [
+      {
+        "command": "/myprs",
+        "url": "https://REPLACE-WITH-YOUR-DEPLOYMENT.vercel.app/api/slack",
+        "description": "List your open pull requests",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": ["commands"]
+    }
+  },
+  "settings": {
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}
