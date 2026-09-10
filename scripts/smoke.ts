@@ -5,7 +5,7 @@
 import { createHmac } from 'node:crypto';
 import { createServer } from 'node:http';
 
-import handler from '../api/slack.ts';
+import handler from '../api/slack.js';
 
 const SIGNING_SECRET = 'smoke-test-secret';
 process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;

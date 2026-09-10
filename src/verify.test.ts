@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { verifySlackSignature } from './verify.ts';
+import { verifySlackSignature } from './verify.js';
 
 const SECRET = 'test-signing-secret';
 const BODY = 'command=%2Fmyprs&user_id=U123&response_url=https%3A%2F%2Fhooks.slack.com%2Fx';

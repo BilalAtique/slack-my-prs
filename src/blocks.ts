@@ -1,4 +1,4 @@
-import type { PullRequest } from './github.ts';
+import type { PullRequest } from './github.js';
 
 export type SlackMessage = {
   response_type: 'ephemeral' | 'in_channel';

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildPullRequestMessage, classify, sortPullRequests, tally } from './blocks.ts';
-import type { PullRequest } from './github.ts';
+import { buildPullRequestMessage, classify, sortPullRequests, tally } from './blocks.js';
+import type { PullRequest } from './github.js';
 
 const NOW = Date.parse('2026-09-10T12:00:00Z');
 

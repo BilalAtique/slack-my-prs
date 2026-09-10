@@ -1,8 +1,8 @@
 import { waitUntil } from '@vercel/functions';
 
-import { buildErrorMessage, buildNoticeMessage, buildPullRequestMessage, type SlackMessage } from '../src/blocks.ts';
-import { fetchOpenPullRequests } from '../src/github.ts';
-import { verifySlackSignature } from '../src/verify.ts';
+import { buildErrorMessage, buildNoticeMessage, buildPullRequestMessage, type SlackMessage } from '../src/blocks.js';
+import { fetchOpenPullRequests } from '../src/github.js';
+import { verifySlackSignature } from '../src/verify.js';
 
 export default async function handler(request: Request): Promise<Response> {
   if (request.method !== 'POST') {
