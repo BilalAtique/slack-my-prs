@@ -5,7 +5,7 @@
 import { createHmac } from 'node:crypto';
 import { createServer } from 'node:http';
 
-import handler from '../api/slack.js';
+import { POST } from '../api/slack.js';
 
 const SIGNING_SECRET = 'smoke-test-secret';
 process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
@@ -36,7 +36,7 @@ const timestamp = String(Math.floor(Date.now() / 1000));
 const signature = `v0=${createHmac('sha256', SIGNING_SECRET).update(`v0:${timestamp}:${body}`).digest('hex')}`;
 
 const started = Date.now();
-const response = await handler(
+const response = await POST(
   new Request('https://example.test/api/slack', {
     method: 'POST',
     headers: {

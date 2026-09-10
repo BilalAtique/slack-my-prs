@@ -4,11 +4,10 @@ import { buildErrorMessage, buildNoticeMessage, buildPullRequestMessage, type Sl
 import { fetchOpenPullRequests } from '../src/github.js';
 import { verifySlackSignature } from '../src/verify.js';
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response('method not allowed', { status: 405, headers: { allow: 'POST' } });
-  }
-
+// A NAMED method export, not a default export. `@vercel/node` reads a default
+// export as the Node `(req, res) => void` signature and discards any returned
+// Response, so the request hangs until the 300s ceiling.
+export async function POST(request: Request): Promise<Response> {
   const signingSecret = process.env.SLACK_SIGNING_SECRET;
   const githubToken = process.env.GITHUB_TOKEN;
   const githubLogin = process.env.GITHUB_LOGIN;
