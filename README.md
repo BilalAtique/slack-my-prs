@@ -39,6 +39,11 @@ vercel deploy --prod
 
 Note the production URL.
 
+Then turn **Deployment Protection → Vercel Authentication** off, under the
+project's settings. New projects have it on, which puts every `.vercel.app` URL
+behind an SSO redirect that Slack cannot follow. The endpoint verifies Slack's
+own signature on every request, so that is the guard it relies on.
+
 ### 2. Create the Slack app
 
 Go to <https://api.slack.com/apps> → **Create New App** → **From a manifest**,
@@ -55,7 +60,7 @@ Only the `commands` scope is requested. The reply travels back over
 
 ```bash
 vercel env add SLACK_SIGNING_SECRET production   # from Basic Information
-vercel env add GITHUB_TOKEN production           # PAT, `repo` scope
+vercel env add GITHUB_TOKEN production           # PAT, read-only (see below)
 vercel env add GITHUB_LOGIN production           # your GitHub handle
 vercel env add SLACK_USER_IDS production         # optional, your Slack user ID
 vercel env add GITHUB_SEARCH_SCOPE production    # optional, e.g. repo:owner/name
@@ -66,12 +71,28 @@ vercel deploy --prod                             # redeploy to pick them up
 workspace can run the command and see the same person's PRs. Set it to your own
 ID (**Profile → ⋮ → Copy member ID**) to keep it yours.
 
+For `GITHUB_TOKEN`, prefer a **fine-grained** PAT granting only
+**Pull requests: Read** and **Metadata: Read** on the repositories you care
+about. A classic token with `repo` also works, but it can write to every
+repository you can reach, which this tool never needs.
+
 `GITHUB_SEARCH_SCOPE` narrows the search — `repo:acme/backend` or `org:acme`.
 Unset means every repository the token can see.
 
 ### 4. Try it
 
 Type `/myprs` in any Slack channel or DM.
+
+## Two things that will bite you
+
+The function exports `POST` **by name**. A default export is read as the Node
+`(req, res) => void` signature, and the `Response` it returns is discarded — the
+request then hangs until the 300-second ceiling rather than failing loudly.
+
+Relative imports carry a **`.js`** extension, not `.ts`. Vercel transpiles each
+file separately and never rewrites specifiers, so a `.ts` specifier survives into
+the deployment and dies with `ERR_MODULE_NOT_FOUND`. Node's own type stripping
+does not map `.js` back to `.ts`, which is why the tests run through `tsx`.
 
 ## Local development
 
