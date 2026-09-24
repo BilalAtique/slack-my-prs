@@ -122,3 +122,7 @@ path against real GitHub data, without deploying anything.
 
 To check the layout visually, paste the printed blocks into
 <https://app.slack.com/block-kit-builder> as `{ "blocks": [...] }`.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
