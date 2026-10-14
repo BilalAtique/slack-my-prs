@@ -72,6 +72,17 @@ test('ignores issue links and plain PR numbers', () => {
   assert.deepEqual(extractPullRequestLinks('see #3726 and https://github.com/acme/repo/issues/12'), []);
 });
 
+test('ignores PR-shaped URLs on other hosts', () => {
+  for (const url of [
+    'https://notgithub.com/acme/repo/pull/1',
+    'https://github.com@evil.example/acme/repo/pull/1',
+    'https://evil.example/https://github.com/acme/repo/pull/1',
+    'https://evil.example/?next=https://github.com/acme/repo/pull/1',
+  ]) {
+    assert.deepEqual(extractPullRequestLinks(url), [], url);
+  }
+});
+
 test('approves an open pull request at the head it read', async () => {
   const github = fakeGitHub({ 1: {} });
   const [outcome] = await approvePullRequests({ token: 't', refs: [ref(1)], fetchImpl: github.fetchImpl });

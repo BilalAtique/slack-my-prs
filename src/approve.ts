@@ -9,13 +9,22 @@ export type ApprovalOutcome = {
   detail: string;
 };
 
-// Slack sends a link as `<https://github.com/o/r/pull/1|github.com/o/r/pull/1>`, so
-// each pull request usually matches twice. The scheme is optional for that reason.
-const PULL_REQUEST_LINK = /github\.com\/([\w.-]+)\/([\w.-]+)\/pull\/(\d+)/g;
+const LINKS = /https?:\/\/[^\s<>|]+/gi;
+const PULL_REQUEST_PATH = /^\/([\w.-]+)\/([\w.-]+)\/pull\/(\d+)(?:\/|$)/;
 
 export function extractPullRequestLinks(text: string): PullRequestRef[] {
   const refs = new Map<string, PullRequestRef>();
-  for (const [, owner = '', repo = '', number = ''] of text.matchAll(PULL_REQUEST_LINK)) {
+  for (const [link] of text.matchAll(LINKS)) {
+    let url: URL;
+    try {
+      url = new URL(link);
+    } catch {
+      continue;
+    }
+    if (url.hostname !== 'github.com') continue;
+    const match = url.pathname.match(PULL_REQUEST_PATH);
+    if (!match) continue;
+    const [, owner = '', repo = '', number = ''] = match;
     const key = `${owner}/${repo}#${number}`.toLowerCase();
     if (refs.has(key)) continue;
     refs.set(key, {
