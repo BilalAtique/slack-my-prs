@@ -1,3 +1,4 @@
+import type { ApprovalOutcome } from './approve.js';
 import type { PullRequest } from './github.js';
 
 export type SlackMessage = {
@@ -104,6 +105,32 @@ export function buildPullRequestMessage(
       .join(', ')}.`,
     blocks,
   };
+}
+
+const APPROVAL_EMOJI = { approved: '✅', skipped: '⏭️', failed: '⚠️' } as const;
+
+export function buildApprovalMessage(outcomes: readonly ApprovalOutcome[]): SlackMessage {
+  if (outcomes.length === 0) return buildNoticeMessage('No pull request links in this message.');
+
+  const approved = outcomes.filter((outcome) => outcome.status === 'approved').length;
+  const skipped = outcomes.filter((outcome) => outcome.status === 'skipped').length;
+  const failed = outcomes.filter((outcome) => outcome.status === 'failed').length;
+  const summary = [`Approved ${approved} of ${plural(outcomes.length, 'pull request', 'pull requests')}`]
+    .concat(skipped > 0 ? [`${skipped} skipped`] : [], failed > 0 ? [`${failed} failed`] : [])
+    .join(' · ');
+  const listed = outcomes.slice(0, MAX_LISTED);
+
+  const blocks: unknown[] = [section(`*${summary}*`)];
+  for (const outcome of listed) {
+    const { ref, title, status, detail } = outcome;
+    const label = title ? `#${ref.number} ${truncate(title, 90)}` : `${ref.owner}/${ref.repo}#${ref.number}`;
+    blocks.push(
+      section(`${APPROVAL_EMOJI[status]} *<${ref.url}|${escapeMrkdwn(label)}>* — ${escapeMrkdwn(truncate(detail, 200))}`),
+    );
+  }
+  if (outcomes.length > listed.length) blocks.push(context(`_…and ${outcomes.length - listed.length} more._`));
+
+  return { response_type: 'ephemeral', text: `${summary}.`, blocks };
 }
 
 export function buildErrorMessage(error: unknown): SlackMessage {

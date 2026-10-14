@@ -50,11 +50,6 @@ type GraphQlNode = {
   commits?: { nodes?: Array<{ commit?: { statusCheckRollup?: { state?: CheckState } | null } }> };
 };
 
-type GraphQlResponse = {
-  data?: { search?: { nodes?: Array<GraphQlNode | null> } };
-  errors?: Array<{ message?: string }>;
-};
-
 export function buildSearchQuery(login: string, scope?: string): string {
   const terms = ['is:pr', 'is:open', `author:${login}`, 'archived:false', 'sort:updated-desc'];
   const trimmed = scope?.trim();
@@ -68,6 +63,25 @@ export async function fetchOpenPullRequests(args: {
   scope?: string;
   fetchImpl?: typeof fetch;
 }): Promise<PullRequest[]> {
+  const data = await githubGraphQl<{ search?: { nodes?: Array<GraphQlNode | null> } }>({
+    token: args.token,
+    query: QUERY,
+    variables: { search: buildSearchQuery(args.login, args.scope) },
+    fetchImpl: args.fetchImpl,
+  });
+
+  // Search over `type: ISSUE` returns issues too. A node that is not a PullRequest
+  // matches no fragment field and arrives as `{}`, so `number` is the discriminator.
+  const nodes = data.search?.nodes ?? [];
+  return nodes.filter(isPullRequestNode).map(toPullRequest);
+}
+
+export async function githubGraphQl<T>(args: {
+  token: string;
+  query: string;
+  variables: Record<string, unknown>;
+  fetchImpl?: typeof fetch;
+}): Promise<T> {
   const doFetch = args.fetchImpl ?? fetch;
   const response = await doFetch('https://api.github.com/graphql', {
     method: 'POST',
@@ -76,25 +90,19 @@ export async function fetchOpenPullRequests(args: {
       'content-type': 'application/json',
       'user-agent': 'slack-my-prs',
     },
-    body: JSON.stringify({
-      query: QUERY,
-      variables: { search: buildSearchQuery(args.login, args.scope) },
-    }),
+    body: JSON.stringify({ query: args.query, variables: args.variables }),
   });
 
   if (!response.ok) {
     throw new Error(`GitHub returned ${response.status} ${response.statusText}`);
   }
 
-  const payload = (await response.json()) as GraphQlResponse;
+  const payload = (await response.json()) as { data?: T; errors?: Array<{ message?: string }> };
   if (payload.errors?.length) {
     throw new Error(payload.errors.map((error) => error.message ?? 'unknown').join('; '));
   }
-
-  // Search over `type: ISSUE` returns issues too. A node that is not a PullRequest
-  // matches no fragment field and arrives as `{}`, so `number` is the discriminator.
-  const nodes = payload.data?.search?.nodes ?? [];
-  return nodes.filter(isPullRequestNode).map(toPullRequest);
+  if (!payload.data) throw new Error('GitHub returned no data');
+  return payload.data;
 }
 
 function isPullRequestNode(node: GraphQlNode | null): node is GraphQlNode {
