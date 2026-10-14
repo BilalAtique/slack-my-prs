@@ -81,14 +81,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 async function approveAndReport(shortcut: MessageShortcut, token: string, slackToken: string | undefined): Promise<void> {
   const outcomes = await approvePullRequests({ token, refs: extractPullRequestLinks(shortcut.text) });
   const message = buildApprovalMessage(outcomes);
-  const allApproved =
+  const allComplete =
     outcomes.length > 0 &&
     outcomes.every((outcome) =>
-      outcome.status === 'approved' || (outcome.status === 'skipped' && outcome.detail === 'Already approved'),
+      outcome.status === 'approved' ||
+      (outcome.status === 'skipped' && ['Already approved', 'Already merged'].includes(outcome.detail)),
     );
-  if (allApproved) {
+  if (allComplete) {
     try {
       await addDoneReaction(shortcut, slackToken);
+      console.info('done reaction confirmed', { channel: shortcut.channelId, timestamp: shortcut.messageTs });
     } catch (error) {
       console.error('done reaction failed', error);
       const notice = buildNoticeMessage('Could not add the done reaction. Your PR approvals are complete.');

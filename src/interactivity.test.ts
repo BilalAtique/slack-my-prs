@@ -54,6 +54,7 @@ function stubFetch(options: {
   failApprovalFor?: number;
   review?: string;
   state?: string;
+  states?: Record<number, 'OPEN' | 'MERGED' | 'CLOSED'>;
   author?: string;
   reactionError?: string;
   reactionHttpStatus?: number;
@@ -105,7 +106,7 @@ function stubFetch(options: {
           pullRequest: {
             id: `PR_${variables.number}`,
             title: 'a change',
-            state: options.state ?? 'OPEN',
+            state: options.states?.[Number(variables.number)] ?? options.state ?? 'OPEN',
             headRefOid: 'sha1',
             author: { login: options.author ?? 'someone' },
             latestOpinionatedReviews: {
@@ -200,7 +201,28 @@ test('marks already approved pull requests done without another GitHub write', a
   assert.deepEqual(githubCalls, ['read']);
 });
 
-for (const options of [{ state: 'CLOSED' }, { state: 'MERGED' }, { author: 'me' }]) {
+test('marks merged pull requests done without another GitHub write', async () => {
+  process.env.SLACK_USER_IDS = 'U_ME';
+  const { delivered, reactions, githubCalls } = stubFetch({ state: 'MERGED' });
+  await POST(shortcutRequest(approveShortcut('U_ME')));
+  assert.equal((await delivered).text, 'Approved 0 of 1 pull request · 1 skipped.');
+  assert.equal(reactions.length, 1);
+  assert.deepEqual(githubCalls, ['read']);
+});
+
+test('marks a message done when it mixes a merged PR and a successful approval', async () => {
+  process.env.SLACK_USER_IDS = 'U_ME';
+  const { delivered, reactions, githubCalls } = stubFetch({ states: { 1: 'MERGED' } });
+  const payload = approveShortcut('U_ME');
+  const message = payload.message as Record<string, unknown>;
+  message.text = `${String(message.text)} https://github.com/acme/repo/pull/2`;
+  await POST(shortcutRequest(payload));
+  assert.equal((await delivered).text, 'Approved 1 of 2 pull requests · 1 skipped.');
+  assert.equal(reactions.length, 1);
+  assert.deepEqual(githubCalls, ['read', 'read', 'approve']);
+});
+
+for (const options of [{ state: 'CLOSED' }, { author: 'me' }]) {
   test(`does not mark an unapproved skipped pull request done: ${JSON.stringify(options)}`, async () => {
     process.env.SLACK_USER_IDS = 'U_ME';
     const { delivered, reactions, githubCalls } = stubFetch(options);

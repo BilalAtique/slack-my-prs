@@ -36,7 +36,7 @@ approved, so a repeated click writes nothing. An approval that a new push
 dismissed is approved again. Each approval is pinned to the head commit that the
 app read, so a commit pushed in between does not receive it.
 
-When every linked pull request is approved or already approved, the app adds a
+When every linked pull request is approved, already approved, or merged, the app adds a
 ✅ reaction to the source message as the user who grants the Slack token. A
 shortcut on a thread reply reacts to that reply. It does not mark the message
 done if a pull request fails or is skipped for another reason. A message with
